@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/frame.css" type="text/css" media="screen">    
+  </head>
+  <body>
+    <div class="header"><h3>{% spaceless %}
+      {% if username %}
+        {{ username }}'s
+      {% else %}
+        My
+      {% endif %} Badges{% endspaceless %}</h3></div>
+    <div class="content">
+      {% if username %}
+          {% for win in wins %}
+            <a href="http://example.com/pages/spotter/badges/" target="_parent"><img src="{{ win.badge.image.thumbnail.url }}" width="48" height="48" title="{{ win.badge.title }}"/></a>
+          {% endfor %}
+      {% else %}
+        {% if request.user %}
+          {% if wins %}
+            {% for win in wins %}
+              <img src="{{ win.badge.image.thumbnail.url }}" width="48" height="48" title="{{ win.badge.title }}"/>
+            {% endfor %}
+          {% else %}
+            Start earning badges now!
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    </div>
+  </body>
+</html>

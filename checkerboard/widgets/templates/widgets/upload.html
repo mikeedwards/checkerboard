@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block header %}
+<script type="text/javascript"> 
+function findLocation() {   
+  if(navigator.geolocation) {     
+    navigator.geolocation.getCurrentPosition(successCallback,errorCallback);   
+  } else {     
+    // Do something to alert the user   
+  } 
+} 
+
+function successCallback(position) {
+  var lat = position.coords.latitude;
+  var lon = position.coords.longitude;   
+  $("input#id_lat").val("" + lat);
+  $("input#id_lon").val("" + lon);  
+} 
+
+function errorCallback() {
+  // Do something with the error 
+} 
+
+$(document).ready(function() {
+    findLocation();
+});
+
+
+
+</script>
+{% endblock %}
+{% block content %}
+{{ response }}
+{{ error.read }}
+<form enctype="multipart/form-data" method="post">
+{{ form }}
+<input type="submit"/>
+
+</form>
+{% endblock %}

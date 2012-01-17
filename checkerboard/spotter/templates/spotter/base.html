@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+{% block html_declare %}
+<html lang="en">
+{% endblock %}
+
+<head>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/media/css/blueprint/screen.css" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="/media/css/blueprint/print.css" type="text/css" media="print">    
+    <!--[if lt IE 8]><link rel="stylesheet" href="/media/css/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+    <link rel="stylesheet" href="/media/css/screen.css" type="text/css" media="screen">
+    {% block extra_style %}
+    {% endblock %}
+    {% block extra_head %}
+    {% endblock %}
+
+</head>
+<body>
+    <div class="container">
+    {% block extra_body %}
+    {% endblock %}
+    
+    {% block main_content %}
+    {% endblock %}
+    </div>
+</body>
+</html>

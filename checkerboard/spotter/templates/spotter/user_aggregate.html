@@ -1,0 +1,580 @@
+{% extends "spotter/base.html" %}
+{% load dajaxice_templatetags %}
+{% block extra_style %}
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/themes/south-street/jquery-ui.css" type="text/css" media="screen">
+    <style>
+      body {
+        background-color: #ccd;
+      }
+    
+      .container {
+        background-color: #fff;
+        padding: 0px 10px;
+      }
+    
+      td {
+        padding-top: 0;
+        padding-bottom: 0;
+        padding-left: 1em;
+        padding-rightt: 1em;
+        font-size: 8pt;
+      }
+      
+      #logout-link, #logout-link:active, #logout-link:hover, #logout-link:visited  {
+        color: #333;
+        font-size: 50%;
+      }
+      
+      thead th {
+       background-color: #459E00;
+       color: #fff;
+       border: solid #327E04 1px;
+      }
+      
+      h2 .reviewer {
+        font-size: 75%;
+      }
+    
+      .more_info {
+        background-color: #007700;
+        color: #fff;
+      }
+      
+      li.selected {
+        display:block;
+      }
+      .odd {
+        background-color:#eee;
+      }
+      
+      .reviewed td {
+      }
+
+      .answer {
+        font-style: italic;
+      }
+
+      .hide_info {
+        display: none;
+      }
+
+      .hover_selection_odd {
+        background: #459E00;
+        color: #fff;
+      }
+
+      .hover_selection_even {
+        background: #327E04;
+        color: #fff;
+      }
+
+      .select_selection_odd {
+        background: #990000;
+        color: #fff;
+      }
+
+      .select_selection_even {
+        background: #770000;
+        color: #fff;
+      }
+
+      .select_badge td {
+        font-weight: bold;
+      }
+      
+      .badge td{
+        border-bottom: 2px solid #000;
+      }
+      
+      .badge_title {
+        font-size: 7pt;
+        background-color: #000;
+        color: #fff;
+        padding: 2px;
+      }
+
+      #selection_controls {
+        margin-bottom: 1em;
+      }
+      
+      .hide_selections {
+        display: block;
+      }
+
+      .status-in-progress {
+        background: #eeee00;
+        color: #000;
+      }
+
+      .status-completed {
+        background: #66cc66;
+        color: #fff;
+      }
+
+      .answer {
+        font-weight: bold;
+      }
+
+      body { font-size: 62.5%; font-family: Verdana;}
+      label, input { display:block; }
+      input.text { margin-bottom:12px; padding: .4em; }
+      fieldset { padding:0; border:0; margin-top:25px; }
+      .ui-dialog .ui-state-error { padding: .3em; }
+
+
+    </style>
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/thickbox.css" type="text/css" media="screen">
+{% endblock %}
+{% block extra_head %}
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/jquery-ui.min.js" type="text/javascript"></script>
+    {% dajaxice_js_import %}
+    <script src="{{ MEDIA_URL }}js/jquery.dajax.core.js" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ MEDIA_URL }}js/thickbox-compressed.js" type="text/javascript" charset="utf-8"></script>
+{% endblock %}
+
+{% block main_content %}
+      <div class="user_info span-24 last">
+        <h2 class="username">{{request.user.username}}'s Observations <a href="{% url widgets_logout %}?next={% url spotter_user_aggregate %}" id="logout-link">[logout]</a></h2>
+      </div>
+
+      <div class="user_accomplishments span-14">
+        <h3>Observations</h3>
+        <table cellpadding="0" cellspacing="0" width="100%">
+          <thead>
+            <tr>
+              <td colspan="2">
+                <label for="station_filter">station</label>
+                <select id="station_filter">
+                  <option value="0">--all--</option>
+                  {% for station in stations %}
+                    <option value="{{station.id}}">{{station.title}}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <label for="acc_type_filter">type</label>
+                <select id="acc_type_filter">
+                  <option value="all">--all--</option>
+                  <option value="spotting">Observation</option>
+                  <option value="textual answer">Text</option>
+                  <option value="boolean answer">Yes/No</option>
+                  <option value="numeric answer">Numbers</option>
+                </select>
+              </td>
+              <td>
+                <label for="acc_time_filter">within</label>
+                <select id="acc_time_filter">
+                  <option value="0">--all--</option>
+                  <option value="1">1 day</option>
+                  <option value="7">7 days</option>
+                  <option value="30">30 days</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>STATION</th>
+              <th>ACTIVITY</th>
+              <th>RESPONSE</th>
+              <th>RECORDED</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for accomplishment in accomplishments %}
+            <tr id="acc_{{accomplishment.id}}" class="accomplishment {% cycle odd,even %} {{ accomplishment.review_class }}">
+            {% ifequal accomplishment.content_type.name "spotting" %}
+              <td>{{ accomplishment.content_object.inquiry.station }}</td>
+            {% else %}
+              <td>{{ accomplishment.content_object.spotting.inquiry.station }}</td>
+            {% endifequal %}
+            {% ifequal accomplishment.content_type.name "spotting" %}
+              <td>{{ accomplishment.content_object.inquiry.title }}</td>
+            {% else %}
+              <td>{{ accomplishment.content_object.spotting.inquiry.title }}</td>
+            {% endifequal %}
+            <td class="accomplishment_content">
+              {% ifequal accomplishment.content_type.name "spotting" %}
+                {% if accomplishment.content_object.image %}
+                  <span class="image">
+                    <a href="{{ accomplishment.content_object.image.url }}" class="thickbox">
+                      <img src="{{ accomplishment.content_object.image.thumbnail.url }}"/>
+                    </a>
+                  </span>
+                {% else %}
+                  <span class="image">No image</span>
+                {% endif %}
+              {% endifequal %}
+  
+              {% ifnotequal accomplishment.content_type.name "spotting" %}
+                <span class="question">{{ accomplishment.content_object.question.body }}</span>
+                <br/>
+                <span class="answer">
+                {% ifnotequal accomplishment.content_type.name "textual answer" %}
+                  {{ accomplishment.content_object.value }}
+                {% else %}
+                  {{ accomplishment.content_object.body }}                
+                {% endifnotequal %}
+                </span>
+              {% endifnotequal %}
+            </td>
+            <td>{{ accomplishment.created|timesince }} ago</td>
+            </tr>            
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="user_selections span-10 last">
+        <h3>Ready to Post</h3>
+        <div class="selection_form span-10 last">
+          <div class="hide_selections span-10 last" id="selection_section">
+            <div id="selection_controls">
+              <button id="add_selections">Add highlighted</button>
+              <button id="clear_selections">Clear</button>
+              <button id="blog_selections">Blog This!</button>
+            </div>
+            <table cellspacing="0" cellpadding="0" width="100%" id="selections">
+              <thead>
+                <tr>
+                  <th>STATION</th>
+                  <th>ACTIVITY</th>
+                  <th>RESPONSE</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="formDialog">
+        <div id="formDialogHeader" class="span-12 last">
+          To add this observation to the remote app, fill in the following:
+        </div>
+        <div id="formDialogContent" class="span-12 last">
+          <form>
+            <fieldset>
+              <label for="formDialogTitle">Title:</label>
+              <input type="text" id="formDialogTitle" size="50" name="title" value=""/>
+              <div id="formDialogImageBody" name="image_body" style="display:none;"></div>
+              <label for="formDialogBody">Blog Post:</label>
+              <textarea id="formDialogBody" name="body"></textarea>
+              <label for="formDialogTags">Tags (comma separated):</label>
+              <input type="text" id="formDialogTags" size="50" name="tags"/>
+            </fieldset>
+          </form> 
+        </div>
+      </div>
+      <div id="confirmDialog">
+        <div id="confirmDialogHeader" class="span-12 last">
+          Thanks for adding this observation to the remote app! You can 
+          <a href="{{remote_app_server}}blog_posts/" target="_parent" id="confirmDialogViewPost">view your post</a> and edit it some more!
+        </div>
+      </div>
+
+    <script type="text/javascript">
+      invoke_thickbox();
+
+      var acc_data = [];
+
+      $('#formDialog').dialog({
+        autoOpen: false,
+        height: 550,
+        width: 550,
+        modal: true,
+        title: "Blog this!",
+        buttons: {
+                   Done:function(){
+                     submitBlogPost(this)
+                   },
+                   Cancel:function(){
+                     $(this).dialog('close'); 
+                   }
+                 },
+        close: function(){}
+      });
+      
+      $('#confirmDialog').dialog({
+        autoOpen: false,
+        height: 300,
+        width: 550,
+        modal: true,
+        title: "Thanks!",
+        buttons: {
+                  Close:function(){
+                    $(this).dialog('close'); 
+                  }
+                },
+        close: function(){}
+      });
+      
+      $('#read').button().click(function(){
+        $('#readDialog').dialog('open');
+      });
+         
+    
+      $('.accomplishment').hover(hover_accomplishment_in,hover_accomplishment_out);
+      $('.accomplishment').click(click_accomplishment);
+
+      function hover_accomplishment_in(){
+        id = this.id.split("_")[1];
+        acc_info = $("#more_info_"+id);
+
+        content = "TBD";
+
+        img = $(acc_info).find(".image");
+        if (img.length > 0)
+        {
+          image = img[0];
+          content = $(image).html();        
+        }
+
+        question = $(acc_info).find(".question");
+        if (question.length > 0)
+        {
+          content = $(question[0]).html();
+        }
+
+        answer = $(acc_info).find(".answer");
+        if (answer.length > 0)
+        {
+          content += $(answer[0]).html();
+        }
+
+        more_info = $(".more_info");
+        more_info.html(content);
+        $(this).toggleClass("hover_selection");
+
+        if ($(this).hasClass('odd')||$(this).hasClass('hover_selection_odd'))
+        {
+          $(this).toggleClass('odd');
+          $(this).toggleClass('hover_selection_odd');
+        }
+
+        if ($(this).hasClass('even')||$(this).hasClass('hover_selection_even'))
+        {
+          $(this).toggleClass('even');
+          $(this).toggleClass('hover_selection_even');
+        }
+      }
+
+      function hover_accomplishment_out(){
+        $(this).toggleClass("hover_selection");
+
+        if ($(this).hasClass('odd')||$(this).hasClass('hover_selection_odd'))
+        {
+          $(this).toggleClass('odd');
+          $(this).toggleClass('hover_selection_odd');
+        }
+
+        if ($(this).hasClass('even')||$(this).hasClass('hover_selection_even' ))
+        {
+          $(this).toggleClass('even');
+          $(this).toggleClass('hover_selection_even');
+        }
+
+      }
+      
+      function click_accomplishment(){
+        $(this).toggleClass('select_selection');
+
+        if ($(this).hasClass('hover_selection_odd')||$(this).hasClass('select_selection_odd'))
+        {
+          $(this).toggleClass('hover_selection_odd');
+          $(this).toggleClass('select_selection_odd');
+        }
+
+        if ($(this).hasClass('hover_selection_even')||$(this).hasClass('select_selection_even'))
+        {
+          $(this).toggleClass('hover_selection_even');
+          $(this).toggleClass('select_selection_even');
+        }
+
+        if ($(this).hasClass("select_selection")){
+          //alert("Do XHR stuff");
+          //$(this).removeClass("select_selection");
+        } else {
+          //$(this).addClass("select_selection");
+        }
+      }
+
+      $('#add_selections').button();
+      $('#add_selections').click(function(){
+        id = this.id.split("_")[3];
+
+        accomplishments = $(".select_selection");
+        selections = $("#selections tbody");
+
+        acc_data = [];
+        for (var r = 0; r < accomplishments.length; r++)
+        {
+          if (r % 2 == 0)
+            cycle = "odd";
+          else
+            cycle = "even"
+          a_id = accomplishments[r].id.split("_")[1];
+          a_station = $($(accomplishments[r]).find("td")[0]).html();
+          a_inquiry = $($(accomplishments[r]).find("td")[1]).html();
+          a_content = $($(accomplishments[r]).find("td")[2]).html();
+          acc_data.push(a_id);
+          selections.append('<tr class="' + cycle + '"><td>' + a_station + '</td>'
+              + '<td>' + a_inquiry + '</td>'
+              + '<td>' + a_content + '</td></tr>');
+        
+        }        
+
+        //selections.html('<tr><td colspan="4"><img src="{{ MEDIA_URL }}img/loadingAnimation.gif"/></td></tr>');
+        //selections.html('');
+        clear_selected();
+        invoke_thickbox();
+               
+        //Dajaxice.checkerboard.spotter.post_accomplishments('Dajax.process',{'badge':id,'username':'{{ user.username }}','data':acc_data});
+
+      });
+
+      $('#clear_selections').button();
+      $('#clear_selections').click(function(){
+        id = this.id.split("_")[3];
+
+        selections = $("#selections tbody");
+        //selections.html('<tr><td colspan="4"><img src="{{ MEDIA_URL }}img/loadingAnimation.gif"></td></tr>');
+        selections.html('');
+        clear_selected();
+
+        //Dajaxice.checkerboard.spotter.clear_accomplishments('Dajax.process',{'badge':id,'username':'{{ user.username }}','data':acc_data});
+      });
+
+      $('#blog_selections').button();
+      $('#blog_selections').click(function(){
+        selections = $("#selections tbody tr");
+
+        $('#formDialogBody').val('');
+        $('#formDialogTitle').val(''); 
+        $('#formDialogTags').val(''); 
+
+        var content = '';
+        for (var s = 0; s < selections.length; s++)
+        {
+          s_station = $($(selections[s]).find("td")[0]).html();
+          s_inquiry = $($(selections[s]).find("td")[1]).html();
+          s_content_node = $(selections[s]).find("td")[2];
+
+          if ($(s_content_node).find('a').length > 0)
+          {
+            s_content = '<img src="' + $($(s_content_node).find('a')[0]).attr('href') + '">\n';
+          }
+          else
+          {
+            s_content = $(s_content_node).html();
+          }
+          
+          content +=  'At ' + s_station + '\n' + 'for activity "' + s_inquiry + '"\n' + s_content;
+          //$('#formDialogImageBody').html(imageHTML);
+                  
+        }        
+        
+        $('#formDialogBody').val(content);
+
+        $('#formDialog').dialog('open');
+
+        //TODO: this should be where the upload method is called
+        //Dajaxice.checkerboard.spotter.award_badge('Dajax.process',{'username':'{{ user.username }}','badge':parseInt(id)});
+      });
+      
+      $('#station_filter').change(filter);
+      
+      $('#acc_type_filter').change(filter);
+
+      $('#acc_time_filter').change(filter);
+
+      function filter(){
+        id = $('#station_filter option:selected').attr("value");
+        type = $('#acc_type_filter option:selected').attr("value");
+        time = $('#acc_time_filter option:selected').attr("value");
+        Dajaxice.checkerboard.spotter.filter('Dajax.process',{'username':'{{ user.username }}','type':type,'station':parseInt(id),'time':parseInt(time)});
+      }
+      
+      function clear_selected(){
+        reviews = $(".select_review");
+
+        for (var r = 0; r < reviews.length; r++)
+        {
+          review = $(reviews[r]);
+          review.toggleClass('select_review');
+  
+          if (review.hasClass('select_review_odd'))
+          {
+            review.removeClass('select_review_odd');
+            review.addClass('odd');
+          }
+  
+          if (review.hasClass('select_review_even'))
+          {
+            review.removeClass('select_review_even');
+            review.addClass('even');
+          }
+        }        
+      };
+
+      function filter_callback(data){
+        table = $('.user_accomplishments table tbody');
+        table.html('');
+        for (a = 0; a < data.length; a++)
+        {
+          if (a % 2 == 0)
+            cycle = "odd";
+          else
+            cycle = "even"
+
+          if (data[a].type == "spotting"){
+            image = data[a].content.image;
+            thumbnail = data[a].content.thumbnail;
+            if (image == null)
+              content = "No image";
+            else
+              content = '<a href="'+ image + '" class="thickbox"><img src="' + thumbnail + '"/></a>';
+          } else {
+            content = '<span class="question">' + data[a].content.question + "</span><br/>" + 
+            '<span class="answer">' + data[a].content.answer + '</span>';
+          }
+          
+          table.append('<tr id="acc_' + data[a].id + '" class="' + cycle + ' accomplishment"><td>' + data[a].station + '</td>'
+                + '<td>' + data[a].inquiry + '</td>'
+                + '<td>' + content + '</td>'
+                + '<td>' + data[a].created + ' ago</td></tr>');
+        }
+        $('.accomplishment').hover(hover_accomplishment_in,hover_accomplishment_out);
+        $('.accomplishment').click(click_accomplishment);
+        invoke_thickbox();
+      }
+
+      function submitBlogPost(widget) {
+        if ($('#formDialogTitle').val() != '')
+        {
+          body = $('#formDialogImageBody').html() + '\n' + $('#formDialogBody').val();
+          body = body.replace(/\n/g,'<br/>');
+          $.post("/checkerboard/upload/blog_post/", 
+            {
+              title: $('#formDialogTitle').val(), 
+              body: body, 
+              tags: $('#formDialogTags').val() 
+            },
+            function(data){
+              base = $('#confirmDialogViewPost').attr("href");
+              $('#confirmDialogViewPost').attr("href",base + data['id']);
+              $('#confirmDialog').dialog('open');
+            }
+          );
+          $(widget).dialog('close');
+        }
+        else
+        {
+          $('#formDialogTitle').effect("highlight", {}, 3000);
+        }
+      }
+
+
+    </script>
+{% endblock %}
+

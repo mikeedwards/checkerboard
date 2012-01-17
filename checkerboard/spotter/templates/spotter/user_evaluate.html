@@ -1,0 +1,456 @@
+{% extends "spotter/base.html" %}
+{% load dajaxice_templatetags %}
+{% block extra_style %}
+    <style>
+
+
+    </style>
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/thickbox.css" type="text/css" media="screen">
+{% endblock %}
+{% block extra_head %}
+    <script src="http://code.jquery.com/jquery.min.js" type="text/javascript"></script>
+    {% dajaxice_js_import %}
+    <script src="{{ MEDIA_URL }}js/jquery.dajax.core.js" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ MEDIA_URL }}js/thickbox-compressed.js" type="text/javascript" charset="utf-8"></script>
+{% endblock %}
+
+{% block main_content %}
+      <div class="user_info span-24 last">
+        <h2 class="username">{{user.username}} <span class="reviewer">(reviewed by {{request.user.username}})</span></h2>
+      </div>
+      <!-- div class="more_info_section span-4">
+        <h3>Accomplishment</h3>
+        <div class="more_info span-4 last">accomplishment</div>
+      </div -->
+      <div id="badges" class="span-5">
+        <h3>Badges</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Badge</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for badge in badges %}
+            <tr class="badge" id="badge_{{badge.id}}">
+              <td width="50">
+                <img src="{{ badge.image.thumbnail.url }}" width="48" height="48" title="{{ badge.description }}"/>
+              </td>
+              <td>
+              <div class="badge_title"><nobr>{{ badge.title }}</nobr></div>
+              <div class="status-{{ badge.status|slugify }}">{{ badge.status }}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+          
+      </div>
+
+      <div class="user_accomplishments span-10">
+        <h3>Accomplishments</h3>
+        <table cellpadding="0" cellspacing="0" width="100%">
+          <thead>
+            <tr>
+              <td colspan="2">
+                <label for="station_filter">station</label>
+                <select id="station_filter">
+                  <option value="0">--all--</option>
+                  {% for station in stations %}
+                    <option value="{{station.id}}">{{station.title}}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <label for="acc_type_filter">type</label>
+                <select id="acc_type_filter">
+                  <option value="all">--all--</option>
+                  <option value="spotting">Observation</option>
+                  <option value="textual answer">Text</option>
+                  <option value="boolean answer">Yes/No</option>
+                  <option value="numeric answer">Numbers</option>
+                </select>
+              </td>
+              <td>
+                <label for="acc_time_filter">within</label>
+                <select id="acc_time_filter">
+                  <option value="0">--all--</option>
+                  <option value="1">1 day</option>
+                  <option value="7">7 days</option>
+                  <option value="30">30 days</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>STATION</th>
+              <th>ACTIVITY</th>
+              <th>RESPONSE</th>
+              <th>COMPLETED</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for accomplishment in accomplishments %}
+            <tr id="acc_{{accomplishment.id}}" class="accomplishment {% cycle odd,even %} {{ accomplishment.review_class }}">
+            {% ifequal accomplishment.content_type.name "spotting" %}
+              <td>{{ accomplishment.content_object.inquiry.station }}</td>
+            {% else %}
+              <td>{{ accomplishment.content_object.spotting.inquiry.station }}</td>
+            {% endifequal %}
+            {% ifequal accomplishment.content_type.name "spotting" %}
+              <td>{{ accomplishment.content_object.inquiry.title }}</td>
+            {% else %}
+              <td>{{ accomplishment.content_object.spotting.inquiry.title }}</td>
+            {% endifequal %}
+            <td class="accomplishment_content">
+              {% ifequal accomplishment.content_type.name "spotting" %}
+                {% if accomplishment.content_object.image %}
+                  <span class="image">
+                    <a href="{{ accomplishment.content_object.image.url }}" class="thickbox">
+                      <img src="{{ accomplishment.content_object.image.thumbnail.url }}"/>
+                    </a>
+                  </span>
+                {% else %}
+                  <span class="image">No image</span>
+                {% endif %}
+              {% endifequal %}
+  
+              {% ifnotequal accomplishment.content_type.name "spotting" %}
+                <span class="question">{{ accomplishment.content_object.question.body }}</span>
+                <br/>
+                <span class="answer">
+                {% ifnotequal accomplishment.content_type.name "textual answer" %}
+                  {{ accomplishment.content_object.value }}
+                {% else %}
+                  {{ accomplishment.content_object.body }}                
+                {% endifnotequal %}
+                </span>
+              {% endifnotequal %}
+            </td>
+            <td>{{ accomplishment.created|timesince }} ago</td>
+            </tr>            
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="user_reviews span-9 last">
+        <h3>Review</h3>
+        <div class="review_form span-9 last">
+          {% for badge in badges %}
+          <div class="badge_review_section hide_badge_reviews span-9 last" id="badge_review_section_{{ badge.id }}">
+            <h3>{{ badge.title}} Review</h3>
+            <button class="add_badge_reviews" id="add_badge_reviews_{{ badge.id }}">Add highlighted</button>
+            <button class="clear_badge_reviews" id="clear_badge_reviews_{{ badge.id }}">Clear</button>
+            <button class="award_badge" id="award_badge_{{ badge.id }}">Award badge?</button>
+            <table cellspacing="0" cellpadding="0" width="100%" id="badge_reviews_{{ badge.id }}">
+              <thead>
+                <tr>
+                  <th>STATION</th>
+                  <th>ACTIVITY</th>
+                  <th>RESPONSE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for accomplishment in badge.user_accomplishments %}
+                <tr class="{% cycle odd,even %}">
+                  {% ifequal accomplishment.content_type.name "spotting" %}
+                    <td>{{ accomplishment.content_object.inquiry.station }}</td>
+                  {% else %}
+                    <td>{{ accomplishment.content_object.spotting.inquiry.station }}</td>
+                  {% endifequal %}
+                  {% ifequal accomplishment.content_type.name "spotting" %}
+                    <td>{{ accomplishment.content_object.inquiry.title }}</td>
+                  {% else %}
+                    <td>{{ accomplishment.content_object.spotting.inquiry.title }}</td>
+                  {% endifequal %}
+                  <td class="accomplishment_content">
+                    {% ifequal accomplishment.content_type.name "spotting" %}
+                      {% if accomplishment.content_object.image %}
+                        <span class="image">
+                          <a href="{{ accomplishment.content_object.image.url }}" class="thickbox">
+                            <img src="{{ accomplishment.content_object.image.thumbnail.url }}"/>
+                          </a>
+                        </span>
+                      {% else %}
+                        <span class="image">No image</span>
+                      {% endif %}
+                    {% endifequal %}
+        
+                    {% ifnotequal accomplishment.content_type.name "spotting" %}
+                      <span class="question">{{ accomplishment.content_object.question.body }}</span>
+                      <br/>
+                      <span class="answer">
+                      {% ifnotequal accomplishment.content_type.name "textual answer" %}
+                        {{ accomplishment.content_object.value }}
+                      {% else %}
+                        {{ accomplishment.content_object.body }}                
+                      {% endifnotequal %}
+                      </span>
+                    {% endifnotequal %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <!-- form>
+            { formset }
+            <input type="submit" name="Record"/>
+          </form-->
+          {% endfor %}
+        </div>
+      </div>
+
+    <script type="text/javascript">
+      invoke_thickbox();
+
+      var acc_data = [];
+    
+      $('.accomplishment').hover(hover_accomplishment_in,hover_accomplishment_out);
+      $('.accomplishment').click(click_accomplishment);
+
+      function hover_accomplishment_in(){
+        id = this.id.split("_")[1];
+        acc_info = $("#more_info_"+id);
+
+        content = "TBD";
+
+        img = $(acc_info).find(".image");
+        if (img.length > 0)
+        {
+          image = img[0];
+          content = $(image).html();        
+        }
+
+        question = $(acc_info).find(".question");
+        if (question.length > 0)
+        {
+          content = $(question[0]).html();
+        }
+
+        answer = $(acc_info).find(".answer");
+        if (answer.length > 0)
+        {
+          content += $(answer[0]).html();
+        }
+
+        more_info = $(".more_info");
+        more_info.html(content);
+        $(this).toggleClass("hover_review");
+
+        if ($(this).hasClass('odd')||$(this).hasClass('hover_review_odd'))
+        {
+          $(this).toggleClass('odd');
+          $(this).toggleClass('hover_review_odd');
+        }
+
+        if ($(this).hasClass('even')||$(this).hasClass('hover_review_even'))
+        {
+          $(this).toggleClass('even');
+          $(this).toggleClass('hover_review_even');
+        }
+      }
+
+      function hover_accomplishment_out(){
+        $(this).toggleClass("hover_review");
+
+        if ($(this).hasClass('odd')||$(this).hasClass('hover_review_odd'))
+        {
+          $(this).toggleClass('odd');
+          $(this).toggleClass('hover_review_odd');
+        }
+
+        if ($(this).hasClass('even')||$(this).hasClass('hover_review_even'))
+        {
+          $(this).toggleClass('even');
+          $(this).toggleClass('hover_review_even');
+        }
+
+      }
+      
+      function click_accomplishment(){
+        $(this).toggleClass('select_review');
+
+        if ($(this).hasClass('hover_review_odd')||$(this).hasClass('select_review_odd'))
+        {
+          $(this).toggleClass('hover_review_odd');
+          $(this).toggleClass('select_review_odd');
+        }
+
+        if ($(this).hasClass('hover_review_even')||$(this).hasClass('select_review_even'))
+        {
+          $(this).toggleClass('hover_review_even');
+          $(this).toggleClass('select_review_even');
+        }
+
+        if ($(this).hasClass("select_review")){
+          //alert("Do XHR stuff");
+          //$(this).removeClass("select_review");
+        } else {
+          //$(this).addClass("select_review");
+        }
+      }
+
+      $('.badge').click(click_badge);
+
+      function click_badge(){
+        badges = $(".select_badge");
+        if ($(".select_badge").length > 0)
+          clear_selected();
+        $(".badge").removeClass("select_badge");
+        $(this).toggleClass("select_badge");
+
+        id = this.id.split("_")[1];
+
+        $(".badge_review_section").addClass("hide_badge_reviews");
+        brs = $("#badge_review_section_" + id);
+        brs.removeClass("hide_badge_reviews");
+      }
+      
+      $('.add_badge_reviews').click(function(){
+        id = this.id.split("_")[3];
+
+        accomplishments = $(".select_review");
+        badge_reviews = $("#badge_reviews_" + id + " tbody");
+
+        acc_data = [];
+        for (var r = 0; r < accomplishments.length; r++)
+        {
+          if (r % 2 == 0)
+            cycle = "odd";
+          else
+            cycle = "even"
+          //badge_reviews.append("<tr class=\"" + cycle + "\">" + $(accomplishments[r]).html() + "</tr>");
+          a_id = accomplishments[r].id.split("_")[1];
+          acc_data.push(a_id);
+        }        
+
+        badge_reviews.html('<tr><td colspan="4"><img src="{{ MEDIA_URL }}img/loadingAnimation.gif"/></td></tr>');
+        badge_reviews.html('');
+        clear_selected();
+        
+        Dajaxice.checkerboard.spotter.post_accomplishments('Dajax.process',{'badge':id,'username':'{{ user.username }}','data':acc_data});
+
+      });
+
+      $('.clear_badge_reviews').click(function(){
+        id = this.id.split("_")[3];
+
+        badge_reviews = $("#badge_reviews_" + id + " tbody");
+        badge_reviews.html('<tr><td colspan="4"><img src="{{ MEDIA_URL }}img/loadingAnimation.gif"></td></tr>');
+        clear_selected();
+
+        Dajaxice.checkerboard.spotter.clear_accomplishments('Dajax.process',{'badge':id,'username':'{{ user.username }}','data':acc_data});
+      });
+
+      $('.award_badge').click(function(){
+        id = this.id.split("_")[2];
+        Dajaxice.checkerboard.spotter.award_badge('Dajax.process',{'username':'{{ user.username }}','badge':parseInt(id)});
+        refresh_badges(true);
+      });
+      
+      $('#station_filter').change(filter);
+      
+      $('#acc_type_filter').change(filter);
+
+      $('#acc_time_filter').change(filter);
+
+      function filter(){
+        id = $('#station_filter option:selected').attr("value");
+        type = $('#acc_type_filter option:selected').attr("value");
+        time = $('#acc_time_filter option:selected').attr("value");
+        Dajaxice.checkerboard.spotter.filter('Dajax.process',{'username':'{{ user.username }}','type':type,'station':parseInt(id),'time':parseInt(time)});
+      }
+      
+      function clear_selected(){
+        reviews = $(".select_review");
+
+        for (var r = 0; r < reviews.length; r++)
+        {
+          review = $(reviews[r]);
+          review.toggleClass('select_review');
+  
+          if (review.hasClass('select_review_odd'))
+          {
+            review.removeClass('select_review_odd');
+            review.addClass('odd');
+          }
+  
+          if (review.hasClass('select_review_even'))
+          {
+            review.removeClass('select_review_even');
+            review.addClass('even');
+          }
+        }        
+      };
+
+      function filter_callback(data){
+        table = $('.user_accomplishments table tbody');
+        table.html('');
+        for (a = 0; a < data.length; a++)
+        {
+          if (a % 2 == 0)
+            cycle = "odd";
+          else
+            cycle = "even"
+
+          if (data[a].type == "spotting"){
+            image = data[a].content.image;
+            thumbnail = data[a].content.thumbnail;
+            if (image == null)
+              content = "No image";
+            else
+              content = '<a href="'+ image + '" class="thickbox"><img src="' + thumbnail + '"/></a>';
+          } else {
+            content = '<span class="question">' + data[a].content.question + "</span><br/>" + 
+            '<span class="answer">' + data[a].content.answer + '</span>';
+          }
+          
+          table.append('<tr id="acc_' + data[a].id + '" class="' + cycle + ' accomplishment"><td>' + data[a].station + '</td>'
+                + '<td>' + data[a].inquiry + '</td>'
+                + '<td>' + content + '</td>'
+                + '<td>' + data[a].created + ' ago</td></tr>');
+        }
+        $('.accomplishment').hover(hover_accomplishment_in,hover_accomplishment_out);
+        $('.accomplishment').click(click_accomplishment);
+        invoke_thickbox();
+      }
+
+      function badge_accomplishments_callback(data){
+        table = $('#badge_reviews_' + data.badge + ' tbody');
+        table.html('');
+        for (a = 0; a < data.a_data.length; a++)
+        {
+          if (a % 2 == 0)
+            cycle = "odd";
+          else
+            cycle = "even"
+
+          if (data.a_data[a].type == "spotting"){
+            image = data.a_data[a].content.image;
+            thumbnail = data.a_data[a].content.thumbnail;
+            if (image == null)
+              content = "No image";
+            else
+              content = '<a href="'+ image + '" class="thickbox"><img src="' + thumbnail + '"/></a>';
+          } else {
+            content = '<span class="question">' + data.a_data[a].content.question + "</span><br/>" + 
+            '<span class="answer">' + data.a_data[a].content.answer + '</span>';
+          }
+          
+          table.append('<tr class="' + cycle + '"><td>' + data.a_data[a].station + '</td>'
+                + '<td>' + data.a_data[a].inquiry + '</td>'
+                + '<td>' + content + '</td></tr>');
+        }
+        invoke_thickbox();
+        refresh_badges(false);
+      }
+
+      function refresh_badges(reset){
+        Dajaxice.checkerboard.spotter.refresh_badges('Dajax.process',{'username':'{{ user.username }}','reset':reset});
+      }
+
+    </script>
+{% endblock %}
+

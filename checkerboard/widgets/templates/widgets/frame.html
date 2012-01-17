@@ -1,0 +1,51 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="{{ MEDIA_URL }}css/frame.css" type="text/css" media="screen">    
+		<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=true&amp;key=ABQIAAAACvkIm8uaU_cRqC5X2qgbvBTHZvGzQVZ4ybsi3UEDQmtKj24ByxT0uFskSC6G4vzLU-hVxRl1YjAAXg" type="text/javascript"></script>
+		<script>
+		    var map;
+		    var recordGeoXml;
+		    var toggleState = 1;
+		
+		    function initialize() {
+		      if (GBrowserIsCompatible()) {
+		        recordGeoXml = new GGeoXml("http://example.com/records.kml");
+		        map = new GMap2(document.getElementById("map_canvas")); 
+		        map.setCenter(new GLatLng(40.74633,-73.84633), 15); 
+		        map.setUIToDefault();
+		      }
+		    } 
+		
+		    function toggleMyKml() {
+		      if (toggleState == 1) {
+		        map.addOverlay(recordGeoXml);
+		        toggleState = 0;
+		      } else {
+		        map.removeOverlay(recordGeoXml);
+		        toggleState = 1;
+		      }
+		    }
+		
+		</script>
+	</head>
+    <body onload="initialize()" onunload="GUnload()">
+        <div class="header"><h3>Welcome to the Spotter Group!</h3></div>
+        <div id="map_canvas" style="width: 600px; height: 400px"></div>
+        <input type="button" value="Swap Layers" onClick="toggleMyKml();"/>
+        <div class="content">
+            <div>Take a look at what everyone has been up to!  Check out the <a href="http://example.com/pages/spotter/lab" target="_parent">spotter Lab</a>!</div>
+            <div>Here is a list of recent badge recipients.  Learn <a href="http://example.com/pages/spotter/badges" target="_parent">more about badges</a>!</div>
+            <div>
+                <ul>
+                {% for win in wins %}
+                 {% if win.user.first_name %}
+                   <li><strong>spotter {{win.badge.title}} Badge</strong> earned by <em>{{win.user.first_name}} {{win.user.last_name}}</em> {{win.created|timesince}} ago</li>
+                 {% else %}
+                   <li><strong>spotter {{win.badge.title}} Badge</strong> earned by <em>{{win.user.username}}</em> {{win.created|timesince}} ago</li>
+                 {% endif %}
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

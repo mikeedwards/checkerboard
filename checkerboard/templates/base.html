@@ -1,0 +1,18 @@
+<html>
+  <head>
+  <title>checkerboard</title>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js"></script>
+{% block header %}
+{% endblock %}
+  </head>
+  <body>
+  <ul>
+    <li><a href="{% url widgets_login %}">Login</a></li>
+    <li><a href="{% url widgets_logout %}">Logout</a></li>
+    <li><a href="{% url widgets_upload_file %}">Upload</a></li>
+    <li>{{ user }}</li>
+  </ul>
+{% block content %}
+{% endblock %}
+  </body>
+</html>

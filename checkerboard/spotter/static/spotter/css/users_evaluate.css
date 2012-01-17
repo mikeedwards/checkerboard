@@ -1,0 +1,100 @@
+body {
+  background-color: #ccd;
+}
+
+.container {
+  background-color: #fff;
+  padding: 0px 10px;
+}
+
+td {
+  padding: 0;
+  font-size: 8pt;
+}
+
+.badge td {
+  text-align: center;
+  padding-top: 2px;
+}
+
+h2 .reviewer {
+  font-size: 75%;
+}
+
+.more_info {
+  background-color: #007700;
+  color: #fff;
+}
+
+li.selected {
+  display:block;
+}
+.odd {
+  background-color:#eee;
+}
+
+.reviewed td {
+}
+
+.answer {
+  font-style: italic;
+}
+
+.hide_info {
+  display: none;
+}
+
+.hover_review_odd {
+  background: #009900;
+  color: #fff;
+}
+
+.hover_review_even {
+  background: #007700;
+  color: #fff;
+}
+
+.select_review_odd {
+  background: #990000;
+  color: #fff;
+}
+
+.select_review_even {
+  background: #770000;
+  color: #fff;
+}
+
+.select_badge td {
+  font-weight: bold;
+}
+
+.badge td{
+  border-bottom: 2px solid #000;
+}
+
+.badge_title {
+  font-size: 7pt;
+  background-color: #000;
+  color: #fff;
+  padding: 2px;
+}
+
+.hide_badge_reviews {
+  display: none;
+}
+
+.status-in-progress {
+  background: #eeee00;
+  color: #000;
+}
+
+.status-completed {
+  background: #66cc66;
+  color: #fff;
+}
+
+.answer {
+  font-weight: bold;
+}
+
+

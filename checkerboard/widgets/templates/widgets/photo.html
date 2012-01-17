@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+<img src="http://example.com/{{ photo.image_paths.show }}"/>
+</div>
+<div>
+<img src="http://maps.google.com/maps/api/staticmap?center={{ record.geometry.coordinates.1 }},{{ record.geometry.coordinates.0 }}&zoom=14&size=400x400&sensor=false&markers=color:blue|label:P|{{ record.geometry.coordinates.1 }},{{ record.geometry.coordinates.0 }}" width="400" height="400"/>
+</div>
+
+{% endblock %}

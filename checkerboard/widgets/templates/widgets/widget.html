@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/frame.css" type="text/css" media="screen"> 
+    <script src="{{ MEDIA_URL }}js/timeline_js/timeline-api.js?bundle=true" type="text/javascript">
+    </script>
+  </head>
+
+{% ifequal group_id "544" %}
+  <body onload="initialize()" onunload="GUnload()">
+    <div id="map_canvas" style="width: 600px; height: 400px"></div>
+    <input type="button" value="Swap Layers" onClick="toggleMyKml();"/>
+  </body>
+
+{% else %}    
+
+  {% ifequal group_id "548" %}
+    <body>
+      <div class="header"><h3>Welcome to the City of Neighborhoods Group!</h3></div>
+       <div class="content">
+        <div>Lot of exciting things are happening soon.  Keep an eye on this area for more updates!</div>
+      </div>
+      <!-- referer: {{ referer }} -->
+      <!-- initial referer: {{ initial_referer }} -->
+    </body>
+  
+  {% else %}
+    {% ifequal group_id "549" %}
+      <body onload="onLoad();">
+        <div class="header"><h3>Welcome to the spotter Group!</h3></div>
+         <div class="content">
+          <div>Lot of exciting things are happening soon.  Keep an eye on this area for more updates!</div>
+        </div>
+        <!-- referer: {{ referer }} -->
+        <!-- initial referer: {{ initial_referer }} -->
+      </body>
+    {% else %}  
+      <body>
+        <div class="header"><h3>Welcome to the your NYCLN Group!</h3></div>
+         <div class="content">
+          <div>Lot of exciting things are happening soon.  Keep an eye on this area for more updates!</div>
+         </div>
+        <!-- referer: {{ referer }} -->
+        <!-- initial referer: {{ initial_referer }} -->
+      </body>
+    {% endifequal %}
+  {% endifequal %}
+  
+  {% if request.session.initial_referer %}
+  {% endif %}
+
+{% endifequal %}
+</html>

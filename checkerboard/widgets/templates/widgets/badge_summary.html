@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ MEDIA_URL }}css/frame.css" type="text/css" media="screen">    
+  </head>
+  <body>
+    <div class="header"><h3>Badges</h3></div>
+    <div class="content">
+      {% for badge in badges %}
+        <div>
+          <h4>{{ badge.title }}</h4>
+          <img src="{{ badge.image.thumbnail.url }}" width="48" height="48" title="{{ badge.title }}" align="left"/>
+          {{ badge.description }}
+        </div>
+      {% endfor %}
+      <!-- referer: {{ referer }} -->
+      <!-- initial referer: {{ initial_referer }} -->
+      <!-- user: {{ username }} -->
+    </div>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+This is the return page.
+Message {{ message }}
+
+
+{% if request.session.initial_referer %}
+  The initial referer was {{request.session.initial_referer}}
+{% endif %}
+{% endblock %}
