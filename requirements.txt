@@ -1,0 +1,8 @@
+south
+socialauth
+openid_consumer
+debug_toolbar
+piston
+django_extensions
+dajaxice
+dajax
